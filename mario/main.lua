@@ -21,7 +21,8 @@ function love.load()
       i = 1,
       estado = 'standing', 
       img = nil,
-      speed = 100
+      speed = 100,
+      jumpingTimer = 0
     }
     loadMario()  
 
@@ -32,7 +33,8 @@ function love.load()
   end
 
 function love.draw()      
-      push:apply('start')      
+      push:apply('start')  
+      if player1.estados[player1.estado][player1.i] ~= nil then     
       love.graphics.draw(player1.img,
         player1.estados[player1.estado][player1.i],
         player1.x,
@@ -42,7 +44,7 @@ function love.draw()
         1, 
         0, 
         0)    
-
+      end
       push:apply('end')
 end
 
@@ -59,35 +61,51 @@ function loadMario()
   player1.estados.standing[1] = love.graphics.newQuad(209, 52, 16, 32, player1.img:getDimensions())  
 
   player1.estados.ducking[1] = love.graphics.newQuad(389, 52, 16, 32, player1.img:getDimensions()) 
+
+  player1.estados.jumping[1] = love.graphics.newQuad(359, 52, 16,32, player1.img:getDimensions() )
+
 end
 
 function movimiento()
   player1.i = math.fmod(player1.i, #player1.estados[player1.estado]) + 1  
 end
 
+function moverX(signo, dt) 
+  player1.x = player1.x + player1.speed * dt * signo
+     player1.direccion = 1 * signo
+     if player1.estado ~= 'jumping' then
+      player1.estado = 'walking'
+      movimiento()
+     end
+end
+
+
 
 function love.update(dt)
  (require "lurker").update(dt)
  
- if  player1.estado ~= 'ducking' then
+ if  player1.estado ~= 'ducking' then  
    if(love.keyboard.isDown('right'))then
-     player1.x=player1.x+player1.speed * dt
-     player1.direccion = 1
-     player1.estado = 'walking'
-     movimiento()
+     moverX(1, dt)
    end
    if love.keyboard.isDown('left') then
-     player1.x=player1.x-player1.speed * dt
-     player1.direccion = -1
-     player1.estado = 'walking'
-     movimiento()
+     moverX(-1, dt)
    end
  end
+ if player1.estado ~= 'jumping' and love.keyboard.isDown('up')then
+          player1.i = 1
+          player1.estado = 'jumping'
+          player1.jumpingTimer = 16
+  end
 
- if love.keyboard.isDown('up')then
-        player1.y= player1.y-10
- end
+  if player1.estado == 'jumping' and player1.jumpingTimer > 0 then
+    print('Gero que estas comiendo?')
+    player1.jumpingTimer= player1.jumpingTimer - 0.8
+    player1.y = player1.y - 300 * dt
+  end
+
  gravedad()
+
  if love.keyboard.isDown('down') then
   player1.estado = 'ducking'
   player1.y = player1.y + 4 
@@ -114,5 +132,8 @@ end
 
 function gravedad()
     player1.y= math.min(player1.y+2,virtualHeight/2)
+    if player1.estado == 'jumping' and player1.y == virtualHeight/2 then
+      player1.estado = 'standing'
+    end
 end
 
