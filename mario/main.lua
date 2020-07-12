@@ -1,4 +1,5 @@
-push = require 'push'
+push = require 'lib.push'
+CM = require 'lib.CameraMgr'
 
 virtualWidth = 432
 virtualHeight = 256
@@ -23,6 +24,7 @@ function love.load()
       speed = 100,
       jumpingTimer = 0
    }
+
    tiles = {
       img = nil,
       floor = nil,
@@ -31,12 +33,17 @@ function love.load()
    loadMario()
    loadTiles()
 
-   push:setupScreen(virtualWidth, virtualHeight, windowWidth, windowHeight,
-		    { fullscreen = false, resizable = true })
+   CM.setLerp(0.1)
+   CM.setScale(1)
+
+   --push:setupScreen(virtualWidth, virtualHeight, windowWidth, windowHeight,
+   --		    { fullscreen = false, resizable = true })
 end
 
 function love.draw()
-   push:apply('start')
+   --push:start()
+   CM.attach()
+
    for x=0,virtualWidth,16 do
       for y=0,virtualHeight,16 do
 	 if y >= virtualFloor then
@@ -57,7 +64,8 @@ function love.draw()
                          32)
    end
 
-   push:apply('end')
+   CM.detach()
+   --push:finish()
 end
 
 
@@ -95,7 +103,7 @@ function moverX(signo, dt)
 end
 
 function love.update(dt)
-   (require "lurker").update(dt)
+   (require "lib.lurker").update(dt)
 
    if  player1.estado ~= 'ducking' then
       if(love.keyboard.isDown('right'))then
@@ -122,6 +130,9 @@ function love.update(dt)
       player1.estado = 'ducking'
       player1.y = player1.y + 4
    end
+
+   CM.setTarget(player1.x, player1.y)
+   CM.update(dt)
 end
 
 function love.keyreleased(key)
